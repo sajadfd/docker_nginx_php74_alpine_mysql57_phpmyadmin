@@ -5,23 +5,28 @@ services:
     image: nginx:1.23.3-alpine-slim
     container_name: nginx
     ports:
-      - "8082:80"
+      - "8081:80"
     volumes:
       - ./your_app:/var/www/html:z
       - ./nginx/conf.d:/etc/nginx/conf.d/:z
     depends_on:
       - php74
-
+    networks:
+      - default   
+      
   php74:
-    image: php:7.4.33-fpm-alpine3.16
-    ports:
-      - "9000:9000"
-    restart: unless-stopped
-    user: 1000:1000
-    container_name: php74
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ./your_app:/var/www/html:z
-      - ./php/php-fpm.d/www.conf:/usr/local/etc/php-fpm.d/www.conf:z
+
+    # Set environment variables for PHP
+    environment:
+      PHP_FPM_HOST: php74
+      PHP_FPM_PORT: "9000"
+    networks:
+      - default
   # uncommit this lines if you need mysql
   # db:
   #   image: mysql:5.7
@@ -48,3 +53,7 @@ services:
   # volumes:
   #   dbdata:
 
+networks:
+  default:
+    external:
+      name: nginx_proxy
